@@ -215,6 +215,8 @@ function printSchema(results, tables) {
             
             if (row.is_nullable == "NO") {
                 line += ".required()";
+            } else if (row.data_tyoe == "text" || row.data_type == "character varying") {
+                line += ".allow('')";
             }
 
             line += ","
