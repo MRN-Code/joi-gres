@@ -199,7 +199,8 @@ function printSchema(results, tables) {
                     }
 
                 case "timestamp without time zone":
-                    return "date()";
+                    
+                    return "date().format('YYYY-MM-DD HH:mm:ss')";
                 
                 case "boolean":
                     return "boolean()";
@@ -219,7 +220,7 @@ function printSchema(results, tables) {
                 line += ".allow('')";
             }
 
-            line += ","
+            line += ",";
 
             console.log(line);
         
