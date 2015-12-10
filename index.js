@@ -18,15 +18,25 @@ if (userArgs.length < 1) {
 }
 
 var serverData, index;
-if (userArgs[0] == '-h') {
+switch(userArgs[0]) {
+case '-h':
     printUsage();
-} else if (userArgs[0] == "-c") {
+    break;
+
+case '-c':
     // open config file
     serverData = JSON.parse(fs.readFileSync(userArgs[1], 'utf8'));
     index = 2;
-} else {
+    break;
+
+case '-s':
+    serverData = userArgs[1];
+    break;
+
+default:
     serverData = parseServerUrl(userArgs[0]);
     index = 1;
+    break
 }
 
 arg_loop:
@@ -48,6 +58,10 @@ while (index < userArgs.length) {
             serverData['db_name'] = checkNextArg("DB name", index);
             break;
 
+        case "-p":
+            serverData['port'] = checkNextArg("Port", index);
+            break;
+
         default:
             break arg_loop;
             break;            
@@ -67,14 +81,18 @@ retrieveSchema(tables, serverData);
 function printUsage() {
     console.log(["joi-gres",
                  "Usage:",
-                 "    joi-gres ( -c config_file | username:password@server/db_name ) [-PpUu] <table_name>...",
+                 "    joi-gres ( -c config_file | -s con_string | username:password@server/db_name ) [-PpdUu] <table_name>...",
                  "",
                  "Options:",
                  "    -c  Specify configuration file",
+                 "    -s  Specify pg connection string",
                  "    -P  Specify password",
+                 "    -p  Spcify port",
                  "    -d  Specify db_name",
                  "    -U  Specify username",
                  "    -u  Specify url"].join('\n'));    
+
+    process.exit(0);
 }
 
 // Parse server url from command line
@@ -111,6 +129,9 @@ function checkNextArg(type, index) {
 
 // Validates server data
 function validateServerData(serverData) {
+    if (typeof(serverData) == "string") {
+        return;
+    }
     ['username', 'password', 'db_name', 'url'].map(function (key) {
         if (serverData[key] == null) {
             throw key + " not found";
@@ -120,11 +141,21 @@ function validateServerData(serverData) {
     
 // Creates db request for the given table
 function retrieveSchema(tables, serverData) {
-    var conString = "postgres://" 
+    var conString;
+    if (typeof(serverData) == "string") {
+        conString = serverData;
+    } else {
+        conString = "postgres://" 
             + serverData['username'] + ":"
             + serverData['password'] + "@"
-            + serverData['url'] + "/"
-            + serverData['db_name'];
+            + serverData['url'];
+        
+        if (serverData['port']) {
+            conString += ":" + serverData['port'];
+        }
+
+        conString += "/" + serverData['db_name'];
+    }
     var client = new pg.Client(conString);
     
     client.connectAsync()
@@ -186,7 +217,7 @@ function printSchema(results, tables) {
                 line += ".required()";
             }
 
-            lines += ","
+            line += ","
 
             console.log(line);
         
