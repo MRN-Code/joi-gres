@@ -193,7 +193,7 @@ function printSchema(results, tables) {
                 
                 case "character varying":
                     if (row.character_maximum_length) {
-                        return "string().max('" + row.character_maximum_length + "')";
+                        return "string().max(" + row.character_maximum_length + ")";
                     } else {
                         return "string()";
                     }
@@ -213,7 +213,7 @@ function printSchema(results, tables) {
                 }
             })();
             
-            if (!row.is_nullable) {
+            if (row.is_nullable == "NO") {
                 line += ".required()";
             }
 
